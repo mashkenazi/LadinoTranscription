@@ -147,7 +147,7 @@ def big_LtH_chars(input_file):
     hebrew_text = hebrew_text[::-1]
 
     # Write the transliterated text to a file
-    with open('hebrew_text.txt', 'w', encoding='utf-8') as f:
+    with open('src/hebrew_text.txt', 'w', encoding='utf-8') as f:
         f.write(' '.join(hebrew_text))
     return hebrew_text
 
@@ -319,4 +319,4 @@ def align_words(source_file, target_file):
     print(hebrew)
     #print(AlignScore(mymap, hebrew))
 
-align_words("ladino_text.txt", "real_hebrew_text.txt")
+align_words("src/ladino_text.txt", "src/real_hebrew_text.txt")
