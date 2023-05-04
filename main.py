@@ -2,6 +2,8 @@ from unidecode import unidecode
 from string import punctuation
 import numpy as np
 import Levenshtein
+from fuzzywuzzy import fuzz
+import string
 
 def big_LtH_chars(input_file):
     # Define a mapping between the Ladino phonetic representation and Hebrew characters
@@ -141,7 +143,7 @@ def big_LtH_chars(input_file):
                 hebrew_word = hebrew_word + 'ם'
             else:
                 hebrew_word = hebrew_word[:-2] + 'ם' + hebrew_word[-2 + 1:]
-        hebrew_text.append(hebrew_word)
+        hebrew_text.append(hebrew_word.strip(punctuation))
 
     # Reverse the order of the words in the text back to the original order
     hebrew_text = hebrew_text[::-1]
@@ -150,6 +152,7 @@ def big_LtH_chars(input_file):
     with open('src/hebrew_text.txt', 'w', encoding='utf-8') as f:
         f.write(' '.join(hebrew_text))
     return hebrew_text
+
 
 def LtH_chars(word):
     # Define a mapping between the Ladino phonetic representation and Hebrew characters
@@ -279,24 +282,45 @@ def LtH_chars(word):
         else:
             hebrew_word = hebrew_word[:-2] + 'ם' + hebrew_word[-2 + 1:]
 
-    return hebrew_word
-def editDist(x, y):
-    if x == "":
-        return len(y)
-    elif y == "":
-        return len(x)
-    else:
-        return Levenshtein.distance(x, y)
+    return hebrew_word.strip(punctuation)
+#def editDist(x, y):
+#    if x == "":
+#        return len(y)
+#    elif y == "":
+#        return len(x)
+#    else:
+#        return Levenshtein.distance(x, y)
 
-def AlignScore(seq1, seq2):
-    if len(seq1) == 0:
-        return AlignScore([], seq2[:-1]) + editDist("", seq2[-1])
-    if len(seq2) == 0:
-        return AlignScore(seq1[:-1], []) + editDist(seq1[-1], "")
-    first = AlignScore(seq1[:-1], seq2[:-1]) + editDist(seq1[-1], seq2[-1])
-    second = AlignScore(seq1[:-1], seq2) + editDist(seq1[-1], "")
-    third = AlignScore(seq1, seq2[:-1]) + editDist("", seq2[-1])
-    return min(first, second, third)
+
+def naive_alignment(text1_words, text2_words):
+    # Initialize the alignment
+    pairs = []
+
+    # Perform the alignment using fuzzy string matching
+    for word1 in text1_words:
+        best_match = None
+        best_score = 0
+        for word2 in text2_words:
+            score = fuzz.ratio(word1, word2)
+            if score > best_score:
+                best_match = word2
+                best_score = score
+        if best_score > 70:  # set a threshold for matching
+            pairs.append((word1, best_match))
+            text2_words.remove(best_match)
+        else:
+            pairs.append((word1, None))
+
+    # Add any remaining words to the alignment
+    for word2 in text2_words:
+        pairs.append((None, word2))
+
+    # Print the alignment
+    for pair in pairs:
+        print(pair)
+
+    return pairs
+
 
 def align_words(source_file, target_file):
 
@@ -317,6 +341,10 @@ def align_words(source_file, target_file):
     hebrew = hebrew_text.split()
     hebrew.reverse()
     print(hebrew)
+
+    naive = naive_alignment(mymap, hebrew)
+    #TODO: implement NON-NAIVE word alignment algorithm
     #print(AlignScore(mymap, hebrew))
+
 
 align_words("src/ladino_text.txt", "src/real_hebrew_text.txt")
